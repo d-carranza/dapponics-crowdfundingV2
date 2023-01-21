@@ -1,26 +1,28 @@
 import { deployments, ethers, getNamedAccounts, network } from "hardhat";
 import { assert, expect } from "chai";
 import { developmentChains } from "../../helper-hardhat-config";
-// import { FundMe, MockV3Aggregator } from "../../typechain-types";
+import { FundMe, MockV3Aggregator } from "../../typechain-types";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 developmentChains.includes(network.name)
   ? describe("FundMe", async function () {
-      let deployer: string;
-      let fundMe: any;
-      let mockV3Aggregator: any;
+      let deployer: SignerWithAddress;
+      let fundMe: FundMe;
+      let mockV3Aggregator: MockV3Aggregator;
 
       const sendValue = ethers.utils.parseEther("1");
 
       beforeEach(async function () {
         // deploy contract using HardHat-deploy
         // populate the contract's variables
-        deployer = (await getNamedAccounts()).deployer;
+        const accounts = await ethers.getSigners();
+        deployer = accounts[0];
         await deployments.fixture(["all"]);
-        fundMe = await ethers.getContract("FundMe", deployer); // This function object comes with a provider
+        fundMe = await ethers.getContract("FundMe", deployer.address); // This function object comes with a provider
 
         mockV3Aggregator = await ethers.getContract(
           "MockV3Aggregator",
-          deployer
+          deployer.address
         );
       });
 
@@ -41,14 +43,16 @@ developmentChains.includes(network.name)
 
         it("Updated the amount funded data structure", async function () {
           await fundMe.fund({ value: sendValue });
-          const response = await fundMe.getAddressToAmountFunded(deployer);
+          const response = await fundMe.getAddressToAmountFunded(
+            deployer.address
+          );
           assert.equal(response.toString(), sendValue.toString());
         });
 
         it("Adds funder to array of funders", async function () {
           await fundMe.fund({ value: sendValue });
           const funder = await fundMe.getFunder(0);
-          assert.equal(funder, deployer);
+          assert.equal(funder, deployer.address);
         });
       });
 
@@ -63,7 +67,7 @@ developmentChains.includes(network.name)
             fundMe.address
           );
           const startingDeployerBalance = await fundMe.provider.getBalance(
-            deployer
+            deployer.address
           );
 
           // Act
@@ -76,11 +80,11 @@ developmentChains.includes(network.name)
             fundMe.address
           );
           const endingDeployerBalance = await fundMe.provider.getBalance(
-            deployer
+            deployer.address
           );
 
           // Assert
-          assert.equal(endingFundMeBalance, 0);
+          assert.equal(endingFundMeBalance.toString(), "0");
           assert.equal(
             startingFundMeBalance.add(startingDeployerBalance).toString(),
             endingDeployerBalance.add(gasCost).toString()
@@ -97,7 +101,7 @@ developmentChains.includes(network.name)
             fundMe.address
           );
           const startingDeployerBalance = await fundMe.provider.getBalance(
-            deployer
+            deployer.address
           );
 
           // Act
@@ -110,11 +114,11 @@ developmentChains.includes(network.name)
             fundMe.address
           );
           const endingDeployerBalance = await fundMe.provider.getBalance(
-            deployer
+            deployer.address
           );
 
           // Assert
-          assert.equal(endingFundMeBalance, 0);
+          assert.equal(endingFundMeBalance.toString(), "0");
           assert.equal(
             startingFundMeBalance.add(startingDeployerBalance).toString(),
             endingDeployerBalance.add(gasCost).toString()
@@ -123,7 +127,10 @@ developmentChains.includes(network.name)
           // Make sure that the funders are reset properly
           await expect(fundMe.getFunder(0)).to.be.reverted;
           for (let i = 1; i < 6; i++) {
-            await expect(fundMe.getAddressToAmountFunded(accounts[i]), "0");
+            await expect(
+              fundMe.getAddressToAmountFunded(accounts[i].address),
+              "0"
+            );
           }
         });
 
