@@ -7,10 +7,12 @@ import "solidity-coverage";
 
 import "hardhat-deploy";
 
-const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL || "https://eth-goerli";
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "0xkey";
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "key";
-const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY || "key";
+const {
+  GOERLI_RPC_URL,
+  PRIVATE_KEY,
+  ETHERSCAN_API_KEY,
+  COINMARKETCAP_API_KEY,
+} = process.env;
 
 const config: HardhatUserConfig = {
   solidity: {
